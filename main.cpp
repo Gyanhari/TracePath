@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <arpa/inet.h>
 #include <cstdio>
 #include <cstring>
@@ -47,10 +48,22 @@ std::string mac_to_string(const u_char *mac) {
   return std::string(buf);
 }
 
+std::string colon_to_hyphen(std::string colon_mac) {
+  char colon = ':';
+  char hyphen = '-';
+  std::replace(colon_mac.begin(), colon_mac.end(), colon, hyphen);
+  return colon_mac;
+}
+
 std::string find_vendor(std::string mac) {
   std::string prefix = mac.substr(0, 8);
-
-  auto it = oui_db.find(prefix);
+  std::string hyphen_prefix = colon_to_hyphen(prefix);
+  for (char &c : hyphen_prefix) {
+    if (c >= 'a' && c <= 'z') {
+      c = c - 32;
+    }
+  }
+  auto it = oui_db.find(hyphen_prefix);
   return it != oui_db.end() ? it->second : "Unknown";
   /* if (it != oui_db.end()) {
      return it->second;
@@ -66,7 +79,7 @@ void packet_handler(u_char *, const struct pcap_pkthdr *,
   std::string src_vendor = find_vendor(src_mac);
   std::string dest_vendor = find_vendor(dest_mac);
 
-  std::cout << " MAC: " << src_mac << "---->" << dest_mac << std::endl;
+  std::cout << " MAC: " << src_vendor << "---->" << dest_vendor << std::endl;
 
   int ip_version = packet[14] >> 4;
   if (ip_version == 4) {
@@ -91,7 +104,7 @@ int main() {
     fprintf(stderr, "Couldn't open devices %s: %s", dev_name, err_buffer);
     return -1;
   }
-  pcap_loop(handle, 100, packet_handler, NULL);
+  pcap_loop(handle, 5, packet_handler, NULL);
   pcap_close(handle);
   return 0;
 }

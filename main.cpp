@@ -79,14 +79,15 @@ void packet_handler(u_char *, const struct pcap_pkthdr *,
   std::string src_vendor = find_vendor(src_mac);
   std::string dest_vendor = find_vendor(dest_mac);
 
-  std::cout << " MAC: " << src_vendor << "---->" << dest_vendor << std::endl;
+  std::cout << " MAC: " << src_vendor << "(" << src_mac << ")" << "---->" << "("
+            << dest_mac << ")  " << dest_vendor << std::endl;
 
   int ip_version = packet[14] >> 4;
   if (ip_version == 4) {
     struct in_addr src_ip, dest_ip;
     memcpy(&src_ip.s_addr, packet + 26, 4);
     memcpy(&dest_ip.s_addr, packet + 30, 4);
-    printf("  IPv4: %s ----> %s \n ", inet_ntoa(src_ip), inet_ntoa(dest_ip));
+    // printf("  IPv4: %s ----> %s \n ", inet_ntoa(src_ip), inet_ntoa(dest_ip));
   } /* else {
     printf("The IP vesion is IPv6.\t It is not implemented now\n");
    }*/
@@ -104,7 +105,7 @@ int main() {
     fprintf(stderr, "Couldn't open devices %s: %s", dev_name, err_buffer);
     return -1;
   }
-  pcap_loop(handle, 5, packet_handler, NULL);
+  pcap_loop(handle, 50, packet_handler, NULL);
   pcap_close(handle);
   return 0;
 }
